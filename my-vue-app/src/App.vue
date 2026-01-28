@@ -2,7 +2,10 @@
   <div class="puzzle-game">
     <h2>拼图游戏</h2>
     <input type="file" @change="handleFileUpload" accept="image/*" />
-    <button @click="resetPuzzle">一键复原</button>
+    <div class="bnt">
+      <button @click="resetPuzzle">一键复原</button>
+      <button @click="generatePuzzle">打乱</button>
+    </div>
     <div v-if="imageSrc" class="puzzle-board">
       <div v-for="(row, rowIndex) in board" :key="rowIndex" class="puzzle-row">
         <div
@@ -263,5 +266,12 @@ function handleFileUpload(event: Event) {
 
 input[type="file"] {
   margin-bottom: 20px;
+}
+
+.bnt{
+  display: flex;
+  button{
+    margin: 5px;
+  }
 }
 </style>
