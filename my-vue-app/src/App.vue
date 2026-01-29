@@ -1,5 +1,5 @@
 <template>
-<PuzzleGame />
+<PuzzleGame :size="5" :cellSize="30"/>
 </template>
 
 <script setup lang="ts">

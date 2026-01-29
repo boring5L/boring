@@ -37,15 +37,24 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, watch} from 'vue';
+import {ref, onMounted, watch, defineProps} from 'vue';
 
 interface Position {
   x: number;
   y: number;
 }
 
-const size = 3; // 拼图的大小
-const cellSize = 30; // 每个格子的大小
+const props = withDefaults(defineProps<{
+  size?: number; // 使用 ? 表示可选
+  cellSize?: number; // 使用 ? 表示可选
+}>(), {
+  size: 3,
+  cellSize: 100
+});
+
+// 解构 props
+const { size, cellSize } = props;
+
 
 // 初始化拼图板
 const board = ref<number[][]>(Array.from({ length: size }, () => Array(size).fill(0)));
