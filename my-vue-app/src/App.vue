@@ -6,17 +6,22 @@
       <button @click="resetPuzzle">一键复原</button>
       <button @click="generatePuzzle">打乱</button>
     </div>
-    <div v-if="imageSrc" class="puzzle-board">
+    <div v-if="imageSrc" class="puzzle-board" >
       <div v-for="(row, rowIndex) in board" :key="rowIndex" class="puzzle-row">
         <div
           v-for="(cell, colIndex) in row"
           :key="colIndex"
           :class="['puzzle-cell', { 'empty': cell === -1 }]"|
-          @click="move(rowIndex, colIndex, cell)"
+          @click="move(rowIndex, colIndex)"
           :style="{
+            width: `${cellSize}px`,
+            height: `${cellSize}px`,
             backgroundImage: cell === -1 ? 'none' : `url(${imageSrc})`,
             backgroundPosition: cell !== -1 ? `${-initialPositions[cell]?.col * cellSize}px ${-initialPositions[cell]?.row * cellSize}px` : '0 0',
-            backgroundSize: `${size * cellSize}px ${size * cellSize}px`
+            backgroundSize: `${size * cellSize}px ${size * cellSize}px`,
+            backgroundRepeat: 'no-repeat',     // ① 禁止平铺
+            objectPosition: 'center',          // ② 以中心为锚点（九宫格已用负值定位，可省略）
+            objectFit: 'cover'                 // ③ 等比填满（九宫格已用 px 定位，可省略）
           }"
         >
 <!--          <span v-if="cell !== 0" class="cell-number">{{rowIndex}}-{{colIndex}}</span>-->
@@ -32,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, computed, watch} from 'vue';
+import {ref, onMounted, watch} from 'vue';
 
 interface Position {
   x: number;
@@ -221,8 +226,8 @@ const canle = ()=>{
 }
 
 .puzzle-cell {
-  width: 100px; /* 每个格子的宽度 */
-  height: 100px; /* 每个格子的高度 */
+  object-fit: cover;
+  object-position: center;
   border: 1px solid #000;
   cursor: pointer;
   background-size: cover;
