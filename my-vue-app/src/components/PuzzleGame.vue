@@ -30,8 +30,12 @@
     </div>
     <div v-if="isSolved" class="victory-modal">
       <p>恭喜你，拼图成功！</p>
-      <button @click="refreshPage">重新开始</button>
+      <button @click="Failure">重新开始</button>
       <button @click="canle">取消</button>
+    </div>
+    <div v-if="isFailure" class="victory-modal">
+      <p>拼图失败</p>
+      <button @click="canle">继续</button>
     </div>
   </div>
 </template>
@@ -70,6 +74,8 @@ const imageSrc = ref<string | null>(null);
 
 // 是否已解决拼图
 const isSolved = ref(false);
+// 游戏失败
+const isFailure = ref(false);
 
 // 生成初始位置，重置数组
 const initialPositions: Array<{ row: number; col: number } | null> = Object.freeze(Array.from(
@@ -192,6 +198,11 @@ function resetPuzzle() {
 function refreshPage() {
   window.location.reload();
 }
+// 拼图失败
+function Failure() {
+  generatePuzzle();
+  isFailure.value = true;
+}
 
 onMounted(() => {
   generatePuzzle();
@@ -214,6 +225,7 @@ function handleFileUpload(event: Event) {
 }
 const canle = ()=>{
   isSolved.value = false
+  isFailure.value = false
 }
 </script>
 
