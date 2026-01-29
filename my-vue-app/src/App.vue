@@ -5,21 +5,22 @@
     <div class="bnt">
       <button @click="resetPuzzle">一键复原</button>
       <button @click="generatePuzzle">打乱</button>
+      <div>{{board}}</div>
     </div>
     <div v-if="imageSrc" class="puzzle-board">
       <div v-for="(row, rowIndex) in board" :key="rowIndex" class="puzzle-row">
         <div
           v-for="(cell, colIndex) in row"
           :key="colIndex"
-          :class="['puzzle-cell', { 'empty': cell === 0 }]"
-          @click="move(rowIndex, colIndex)"
+          :class="['puzzle-cell', { 'empty': cell === -1 }]"|
+          @click="move(rowIndex, colIndex, cell)"
           :style="{
-            backgroundImage: cell === 0 ? 'none' : `url(${imageSrc})`,
-            backgroundPosition: cell !== 0 ? `${-shuffledPositions[cell - 1]?.col * cellSize}px ${-shuffledPositions[cell - 1]?.row * cellSize}px` : '0 0',
+            backgroundImage: cell === -1 ? 'none' : `url(${imageSrc})`,
+            backgroundPosition: cell !== -1 ? `${-initialPositions[cell]?.col * cellSize}px ${-initialPositions[cell]?.row * cellSize}px` : '0 0',
             backgroundSize: `${size * cellSize}px ${size * cellSize}px`
           }"
         >
-          <span v-if="cell !== 0" class="cell-number">{{ cell }}</span>
+          <span v-if="cell !== 0" class="cell-number">{{rowIndex}}-{{colIndex}}</span>
         </div>
       </div>
     </div>
@@ -31,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import {ref, onMounted, computed, watch} from 'vue';
 
 interface Position {
   x: number;
@@ -40,6 +41,7 @@ interface Position {
 
 const size = 3; // 拼图的大小
 const cellSize = 100; // 每个格子的大小
+const totle = size * size ;//格子总数
 
 // 初始化拼图板
 const board = ref<number[][]>(Array.from({ length: size }, () => Array(size).fill(0)));
@@ -56,12 +58,17 @@ const imageSrc = ref<string | null>(null);
 // 是否已解决拼图
 const isSolved = ref(false);
 
+// 生成初始位置，重置数组
+const initialPositions: Array<{ row: number; col: number } | null> = Object.freeze(Array.from(
+    {length: size * size},
+    (_, idx) => ({row: Math.floor(idx / size), col: idx % size})
+))
+
 // 生成拼图
 function generatePuzzle() {
-  const numbers = Array.from({ length: size * size - 1 }, (_, i) => i + 1);
-  numbers.push(0); // 空格
+  const numbers = Array.from({length: size * size - 1}, (_, i) => i);
+  numbers.push(-1); // 空格
   shuffle(numbers);
-
   for (let i = 0; i < size; i++) {
     for (let j = 0; j < size; j++) {
       if (board.value && board.value[i]) {
@@ -69,26 +76,11 @@ function generatePuzzle() {
       }
     }
   }
-
-  // 生成初始位置
-  const initialPositions: Array<{ row: number; col: number }> = [];
-  for (let i = 0; i < size; i++) {
-    for (let j = 0; j < size; j++) {
-      initialPositions.push({ row: i, col: j });
-    }
-  }
-
-  // 打乱初始位置
-  const shuffledInitialPositions = shuffleArray(initialPositions);
-
-  // 将打乱后的初始位置与拼图块绑定
-  shuffledPositions.value = [null, ...shuffledInitialPositions];
-
-  // 找到空格的位置
+  // 找到空格的位置F
   for (let i = 0; i < size; i++) {
     if (board.value && board.value[i]) {
       for (let j = 0; j < size; j++) {
-        if (board.value[i][j] === 0) {
+        if (board.value[i][j] === -1) {
           emptyPos.value = { x: i, y: j };
           return;
         }
@@ -119,31 +111,36 @@ function shuffleArray<T>(array: T[]): T[] {
 function move(row: number, col: number) {
   if (!board.value || !emptyPos.value) return;
 
+  // 检查点击位置是否与-1相邻
   if (Math.abs(emptyPos.value.x - row) + Math.abs(emptyPos.value.y - col) !== 1) return;
 
-  const temp = board.value[emptyPos.value.x][emptyPos.value.y];
-  board.value[emptyPos.value.x][emptyPos.value.y] = board.value[row][col];
-  board.value[row][col] = temp;
-  emptyPos.value = { x: row, y: col };
+  // 交换两个位置的值
+  [board.value[emptyPos.value.x][emptyPos.value.y], board.value[row][col]] =
+      [board.value[row][col], board.value[emptyPos.value.x][emptyPos.value.y]];
 
-  checkIfSolved();
+  // 更新空格位置
+  emptyPos.value = { x: row, y: col };
+  // 检查是否完成拼图
+  checkIfSolved()
 }
+watch(board, () => {
+  checkIfSolved()
+});
+
 
 // 检查拼图是否已解决
 function checkIfSolved() {
   const solvedBoard = Array.from({ length: size }, (_, i) => Array(size).fill(0));
-  let currentNumber = 1;
-
+  let currentNumber = 0;
   for (let i = 0; i < size; i++) {
     for (let j = 0; j < size; j++) {
       if (i === size - 1 && j === size - 1) {
-        solvedBoard[i][j] = 0;
+        solvedBoard[i][j] = -1;
       } else {
         solvedBoard[i][j] = currentNumber++;
       }
     }
   }
-
   if (JSON.stringify(board.value) === JSON.stringify(solvedBoard)) {
     isSolved.value = true;
   }
@@ -152,12 +149,11 @@ function checkIfSolved() {
 // 重置拼图
 function resetPuzzle() {
   const solvedBoard = Array.from({ length: size }, (_, i) => Array(size).fill(0));
-  let currentNumber = 1;
-
+  let currentNumber = 0;
   for (let i = 0; i < size; i++) {
     for (let j = 0; j < size; j++) {
       if (i === size - 1 && j === size - 1) {
-        solvedBoard[i][j] = 0;
+        solvedBoard[i][j] = -1;
       } else {
         solvedBoard[i][j] = currentNumber++;
       }
@@ -165,7 +161,17 @@ function resetPuzzle() {
   }
 
   board.value = solvedBoard;
-  emptyPos.value = { x: size - 1, y: size - 1 };
+  shuffledPositions.value = initialPositions
+  for (let i = 0; i < size; i++) {
+    if (board.value && board.value[i]) {
+      for (let j = 0; j < size; j++) {
+        if (board.value[i][j] === -1) {
+          emptyPos.value = { x: i, y: j };
+          return;
+        }
+      }
+    }
+  }
   isSolved.value = false;
 }
 
@@ -241,7 +247,7 @@ function handleFileUpload(event: Event) {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: #fff;
+  background-color: #2b2d30;
   padding: 20px;
   border: 1px solid #000;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
