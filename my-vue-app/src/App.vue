@@ -5,7 +5,6 @@
     <div class="bnt">
       <button @click="resetPuzzle">一键复原</button>
       <button @click="generatePuzzle">打乱</button>
-      <div>{{board}}</div>
     </div>
     <div v-if="imageSrc" class="puzzle-board">
       <div v-for="(row, rowIndex) in board" :key="rowIndex" class="puzzle-row">
@@ -20,13 +19,14 @@
             backgroundSize: `${size * cellSize}px ${size * cellSize}px`
           }"
         >
-          <span v-if="cell !== 0" class="cell-number">{{rowIndex}}-{{colIndex}}</span>
+<!--          <span v-if="cell !== 0" class="cell-number">{{rowIndex}}-{{colIndex}}</span>-->
         </div>
       </div>
     </div>
     <div v-if="isSolved" class="victory-modal">
       <p>恭喜你，拼图成功！</p>
       <button @click="refreshPage">重新开始</button>
+      <button @click="canle">取消</button>
     </div>
   </div>
 </template>
@@ -40,8 +40,7 @@ interface Position {
 }
 
 const size = 3; // 拼图的大小
-const cellSize = 100; // 每个格子的大小
-const totle = size * size ;//格子总数
+const cellSize = 30; // 每个格子的大小
 
 // 初始化拼图板
 const board = ref<number[][]>(Array.from({ length: size }, () => Array(size).fill(0)));
@@ -198,6 +197,9 @@ function handleFileUpload(event: Event) {
     };
     reader.readAsDataURL(file);
   }
+}
+const canle = ()=>{
+  isSolved.value = false
 }
 </script>
 
