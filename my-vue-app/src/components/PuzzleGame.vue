@@ -30,7 +30,7 @@
     </div>
     <div v-if="isSolved" class="victory-modal">
       <p>恭喜你，拼图成功！</p>
-      <button @click="Failure">重新开始</button>
+      <button @click="restart">重新开始</button>
       <button @click="canle">取消</button>
     </div>
     <div v-if="isFailure" class="victory-modal">
@@ -197,6 +197,11 @@ function resetPuzzle() {
 // 刷新页面
 function refreshPage() {
   window.location.reload();
+}
+//
+function restart () {
+  generatePuzzle();
+  canle();
 }
 // 拼图失败
 function Failure() {
